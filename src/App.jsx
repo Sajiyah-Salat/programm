@@ -2,9 +2,10 @@ import { useState, useEffect } from 'react';
 import Logo from '/logo.png';
 import './App.css';
 import { FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn } from "react-icons/fa";
-
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 function App() {
 
+  const [itemsPerSlide, setItemsPerSlide] = useState(4);
   const [leftPosition, setLeftPosition] = useState(0);
   const [rightPosition, setRightPosition] = useState(0);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -115,14 +116,18 @@ function App() {
     { name: "JOANIE KEELING", image: "/girl.png", rating: 5, text: "Laudantium inventore voluptat distinctio non maximus. Tempus ipsumet phasell lorem amet, nam amet volupt. Quos dui aqua sed split et, sid aquat." }
   ];
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setLeftPosition((prev) => (prev + 1) % testimonials1.length);
-      setRightPosition((prev) => (prev - 1 + testimonials2.length) % testimonials2.length);
-    }, 3000);
+  const handlePrevious = () => {
+    setLeftPosition((prev) => (prev > 0 ? prev - 1 : testimonials1.length - 1));
+    setRightPosition((prev) => (prev > 0 ? prev - 1 : testimonials2.length - 1));
+  };
 
-    return () => clearInterval(interval);
-  }, []);
+  const handleNext = () => {
+    setLeftPosition((prev) => (prev + 1) % testimonials1.length);
+    setRightPosition((prev) => (prev + 1) % testimonials2.length);
+  };
+
+
+
 
   const RatingStars = ({ rating }) => (
     <div className="flex gap-1">
@@ -131,7 +136,30 @@ function App() {
       ))}
     </div>
   );
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setItemsPerSlide(4);
+      } else if (window.innerWidth >= 768) {
+        setItemsPerSlide(2);
+      } else {
+        setItemsPerSlide(1);
+      }
+    };
 
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const totalSlides = Math.ceil(Insights.length / itemsPerSlide);
+
+
+
+  const getVisibleInsights = () => {
+    const start = currentSlide * itemsPerSlide;
+    return Insights.slice(start, start + itemsPerSlide);
+  };
 
   return (
     <>
@@ -151,9 +179,9 @@ function App() {
         </button>
 
         {/* Navigation */}
-        <div className={`${isMenuOpen ? 'flex' : 'hidden'} md:flex flex-1 justify-center  md:relative top-full left-0 w-full md:w-auto bg-white md:bg-transparent`}>
+        <div className={`${isMenuOpen ? 'flex' : 'hidden '} md:flex flex-1 justify-center  md:relative top-full left-0 w-full sm:w-full bg-white md:bg-transparent`}>
           <nav className="w-full md:w-auto">
-            <ul className="flex flex-col md:flex-row gap-4 md:gap-6 text-gray-600 font-semibold p-4 md:p-0">
+            <ul className="flex flex-col md:flex-row text-center gap-4 md:gap-6 text-gray-600 font-semibold p-4 md:p-0">
               <li className="cursor-pointer text-black underline decoration-black hover:text-[#06C1C0] text-sm">HOME</li>
               <li className="cursor-pointer hover:text-[#06C1C0] text-sm">SERVICES</li>
               <li className="cursor-pointer hover:text-[#06C1C0] text-sm">FAQ</li>
@@ -205,15 +233,35 @@ function App() {
 
       {/* Responsive Technologies Section */}
       <section className="py-10 text-center px-4">
-        <h2 className="text-2xl md:text-3xl font-semibold text-gray-800 mb-6">
-          Our Technologies and Platforms
-        </h2>
-        <div className="flex flex-col md:flex-row gap-6 overflow-x-auto hide-scrollbar scroll-smooth">
-          <img src="/Group1.png" alt="Technology 1" className="w-full md:w-auto h-auto" />
-          <img src="/Group2.png" alt="Technology 2" className="w-full md:w-auto h-auto" />
-          <img src="/Group3.png" alt="Technology 3" className="w-full md:w-auto h-auto" />
+      <h2 className="text-2xl md:text-3xl font-semibold text-gray-800 mb-6">
+        Our Technologies and Platforms
+      </h2>
+      <div className="relative w-full overflow-hidden">
+        <div className="flex items-center w-max animate-scroll">
+          {/* Duplicated images for smooth infinite scrolling */}
+          <img src="/Group1.png" alt="Technology 1" className="w-auto h-auto mx-4" />
+          <img src="/Group2.png" alt="Technology 2" className="w-auto h-auto mx-4" />
+          <img src="/Group3.png" alt="Technology 3" className="w-auto h-auto mx-4" />
+          {/* Duplicate the same images */}
+          <img src="/Group1.png" alt="Technology 1" className="w-auto h-auto mx-4" />
+          <img src="/Group2.png" alt="Technology 2" className="w-auto h-auto mx-4" />
+          <img src="/Group3.png" alt="Technology 3" className="w-auto h-auto mx-4" />
         </div>
-      </section>
+      </div>
+
+      <style>
+        {`
+          @keyframes scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+          }
+          .animate-scroll {
+            display: flex;
+            animation: scroll 10s linear infinite;
+          }
+        `}
+      </style>
+    </section>
 
       {/* Responsive About Section */}
       <section className="relative pb-20 md:pb-40 bg-white rounded-t-[60px] md:rounded-t-full overflow-hidden">
@@ -240,12 +288,20 @@ function App() {
                 today's businesses. Whether you're a startup or an established company, we partner
                 with you to turn your vision into reality.
               </p>
-              <div className="translate-x-0 md:translate-x-40 z-10 translate-y-10 md:translate-y-60 bg-teal-500/10 rounded-xl p-6">
+              <div className="translate-x-0 md:translate-x-40 z-10 translate-y-10 md:translate-y-60 bg-[#06C1C0] rounded-xl p-6">
                 <div className="flex items-center z-20 gap-4 mb-4">
-                  <div className="w-8 h-8 z-20 bg-teal-500 rounded-lg flex items-center justify-center">
-                    <span className="text-white">🎯</span>
+                  <div className='flex gap-3 items-center'>
+                    <div className="w-8 h-8 z-20 bg-[#06C1C0] rounded-lg flex items-center justify-center">
+                      <span className="text-white"><img src="/mission.png" alt="" /></span>
+                    </div>
+                    <h3 className="font-semibold text-white border-b border-white">OUR MISSION</h3>
                   </div>
-                  <h3 className="font-semibold">Our Mission</h3>
+                  <div className='flex gap-3'>
+                    <div className="w-8 h-8 z-20 bg-[#06C1C0] rounded-lg flex items-center justify-center">
+                      <span className="text-white"><img src="/goal.png" alt="" /></span>
+                    </div>
+                    <h3 className="font-semibold text-gray-200 items-center">OUR VISSION</h3>
+                  </div>
                 </div>
                 <p className="text-gray-600">
                   Our mission is to deliver innovative, high-quality technology solutions that
@@ -267,6 +323,12 @@ function App() {
               />
             </div>
           </div>
+        </div>
+        {/* Decorative Elements */}
+        <div className="absolute top-0 left-0 w-72 h-72 bg-teal-200 rounded-full opacity-20 -translate-x-1/2 -translate-y-1/2"></div>
+        <div className="absolute top-1/2 right-0 w-48 h-48 bg-blue-200 rounded-full opacity-20 translate-x-1/2"></div>
+        <div className=" z-0 absolute -bottom-96 w-full h-full">
+          <img src="/wave.png" alt="Wave" className="w-full h-full object-contain" />
         </div>
       </section>
 
@@ -300,7 +362,7 @@ function App() {
                         <img
                           src={service.image}
                           alt={service.title}
-                          className="w-full h-48 md:h-72 lg:h-96 object-cover" // Adjusted height for all screens
+                          className="w-full h-96 md:h-72 lg:h-96 object-cover" // Adjusted height for all screens
                         />
                         <div className="absolute bottom-0 left-0 w-full bg-white rounded-lg text-black m-4 px-4 py-3">
                           <h3 className="text-lg font-semibold">{service.title}</h3>
@@ -340,47 +402,71 @@ function App() {
 
 
 
-      <section>
-        <div className="w-full m-20 py-12">
-          <div className='flex '>
-            <div className="mb-8">
-              <h2 className="text-3xl font-bold mb-2">With Our Experience We</h2>
-              <h3 className="text-3xl font-bold text-teal-500">Will Serve You</h3>
-            </div>
+{/* Testimonial */}
+<section>
+  <div className="w-full px-4 md:px-10 py-12">
+    <div className="flex justify-between items-center flex-wrap">
+      <div className="mb-8">
+        <h2 className="text-2xl md:text-3xl font-bold mb-2">With Our Experience We</h2>
+        <h3 className="text-2xl md:text-3xl font-bold text-teal-500">Will Serve You</h3>
+      </div>
 
+      <div className="flex gap-4">
+        <button
+          onClick={() => {
+            setLeftPosition((prev) => (prev > 0 ? prev - 1 : testimonials1.length - 1));
+            setRightPosition((prev) => (prev > 0 ? prev - 1 : testimonials2.length - 1));
+          }}
+          className="p-2 rounded-full text-white bg-[#989898] hover:bg-gray-200 transition-colors"
+          aria-label="Previous testimonials"
+        >
+          <ChevronLeft className="w-6 h-6" />
+        </button>
+        <button
+          onClick={() => {
+            setLeftPosition((prev) => (prev + 1) % testimonials1.length);
+            setRightPosition((prev) => (prev + 1) % testimonials2.length);
+          }}
+          className="p-2 rounded-full text-white bg-[#06C1C0] hover:bg-gray-200 transition-colors"
+          aria-label="Next testimonials"
+        >
+          <ChevronRight className="w-6 h-6" />
+        </button>
+      </div>
+    </div>
+
+    <div className="overflow-hidden relative">
+      <div
+        className="flex mb-5 gap-2 justify-start transition-transform duration-500 ease-in-out"
+        style={{ transform: `translateX(-${leftPosition * 100}%)` }}
+      >
+        {testimonials1.map((testimonial, index) => (
+          <div key={index} className="flex-shrink-0 w-full  md:w-80 px-2">
+            <TestimonialCard testimonial={testimonial} />
           </div>
+        ))}
+      </div>
 
-          <div className="overflow-hidden relative">
-            <div
-              className="flex justify-start mb-10 transition-transform duration-1000"
-              style={{ width: `${testimonials1.length * 320}px`, transform: `translateX(-${leftPosition * 320}px)` }}
-            >
-              {testimonials1.map((testimonial, index) => (
-                <div key={index} className="flex-shrink-0">
-                  <TestimonialCard testimonial={testimonial} />
-                </div>
-              ))}
-            </div>
-
-            <div
-              className="flex justify-end transition-transform duration-1000"
-              style={{ width: `${testimonials2.length * 320}px`, transform: `translateX(${rightPosition * 320}px)` }}
-            >
-              {testimonials2.map((testimonial, index) => (
-                <div key={index} className="flex-shrink-0">
-                  <TestimonialCard testimonial={testimonial} />
-                </div>
-              ))}
-            </div>
+      <div
+        className="flex gap-2 justify-end transition-transform duration-500 ease-in-out"
+        style={{ transform: `translateX(${rightPosition * 100}%)` }}
+      >
+        {testimonials2.map((testimonial, index) => (
+          <div key={index} className="flex-shrink-0 w-full md:w-80 px-2">
+            <TestimonialCard testimonial={testimonial} />
           </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
 
-        </div>
-      </section>
 
 
       <div>
         {/* banner Section */}
-        <section className="bg-[#00504F] mb-40 h-[60vh] relative text-white">
+        <section className=" rounded-lg sm:p-0 p-10 bg-[#00504F] mb-20 md:mb-40 min-h-[60vh] py-10 relative text-white">
+
           <div className="absolute w-full opacity-7 top-0">
             <img src="/wave.png" alt="wave" className="w-full" />
           </div>
@@ -397,7 +483,7 @@ function App() {
                   </li>
                 ))}
               </ul>
-              <div className="flex items-center bg-white text-black border-black border-2 px-4 py-2 mt-4 w-fit">
+              <div className="sm:flex hidden  items-center bg-white text-black border-black border-2 px-4 py-2 mt-4 w-fit">
                 <p className="text-black-500">Please enter your email</p>
                 <span className="ml-10 border-black border-2 rounded-full p-1 text-black text-xl">➝</span>
               </div>
@@ -440,49 +526,36 @@ function App() {
         </section>
       </div>
 
-      <section className='relative z-20'>
-        {/* Latest insight */}
-
-        <div className="z-20 relative mt-20 overflow-hidden">
-          <div
-            className="flex transition-transform duration-500 ease-in-out"
-            style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-          >
-            {Insights.map((service, index) => (
-              <div key={index} className="min-w-full flex w-full justify-center px-4">
-                <div className="flex justify-center gap-6">
-                  {Insights.map((item, i) => (
-                    <div
-                      key={i}
-                      className={`w-64 bg-white rounded-lg overflow-hidden shadow-md transform transition-transform duration-300 hover:shadow-xl
-                ${i === currentSlide ? 'scale-105' : 'scale-100'}`}
-                    >
-
-                      <img
-                        src={item.image}
-                        alt={item.title}
-                        className="w-full h-48 object-cover"
-                      />
-
-                      {/* Text Below Image */}
-                      <div className="p-4 text-center">
-                        <h3 className="text-lg font-semibold">{item.title}</h3>
-                        <p className="text-sm text-gray-600">{item.description}</p>
-                      </div>
+      {/* Latest Insights */}
+      <section className="relative z-20">
+        <div className="z-20 relative mt-20 overflow-hidden px-4">
+          <div className="max-w-7xl mx-auto">
+            <div className="transition-transform duration-500 ease-in-out">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {getVisibleInsights().map((item, index) => (
+                  <div
+                    key={index}
+                    className="bg-white rounded-lg overflow-hidden shadow-md transform transition-transform duration-300 hover:shadow-xl"
+                  >
+                    <img
+                      src={item.image}
+                      alt={item.title}
+                      className="w-full h-48 object-cover"
+                    />
+                    <div className="p-4 text-center">
+                      <h3 className="text-lg font-semibold">{item.title}</h3>
+                      <p className="text-sm text-gray-600">{item.description}</p>
                     </div>
-                  ))}
-                </div>
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
         </div>
 
-
-
-
         {/* Pagination Dots */}
         <div className="flex justify-center gap-2 mt-6">
-          {Insights.map((_, index) => (
+          {[...Array(totalSlides)].map((_, index) => (
             <button
               key={index}
               onClick={() => goToSlide(index)}
@@ -493,13 +566,15 @@ function App() {
           ))}
         </div>
 
-        <div className="absolute z-10 w-full top-0">
-          <img src="/wave.png" alt="wave" className="w-full" />
-        </div>
+        <div className="absolute z-10 w-full top-0 overflow-hidden">
+  <img src="/wave.png" alt="wave" className="w-full object-cover" />
+</div>
       </section>
 
-      <section className="p-10 z-20 mt-20 flex flex-col items-center justify-center text-center h-[70vh] relative rounded-t-[120px] overflow-hidden">
-        {/* Background Image */}
+      {/* CTA Section */}
+      <section className="p-4 md:p-10 z-20 mt-20 flex flex-col items-center justify-center text-center min-h-[70vh] py-20 relative rounded-t-[120px] overflow-hidden">
+
+{/* Background Image */}
         <div className="absolute inset-0">
           <img src="/CTA.png" alt="Background" className="w-full h-full object-cover" />
         </div>
